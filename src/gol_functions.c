@@ -1,5 +1,6 @@
 #include "gol_functions.h"
 
+#include <ncurses.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -13,7 +14,7 @@ int init_arrays(int ***field1, int ***field2, int x_size, int y_size) {
   (*field2)[0] = calloc(x_size * y_size, sizeof(int));
   for (int i = 0; i < y_size; i++) (*field2)[i] = (*field2)[0] + i * x_size;
 
-  return (*field1 != NULL && *field2 != NULL) ? EXIT_SUCCESS : EXIT_FAILURE;
+  return (*field1 && *field2) ? EXIT_SUCCESS : memory_allocation_error;
 }
 
 int fill_array(int argc, char **argv, int **field) {
@@ -27,7 +28,7 @@ int fill_array(int argc, char **argv, int **field) {
 
   if (!err) p_f = fopen(argv[1], "r");
   if (p_f) {
-    while (lines <= FIELD_Y && bytes_read != -1) {
+    while (lines < FIELD_Y && bytes_read != -1) {
       bytes_read = getline(&str, &n, p_f);
       if (bytes_read < FIELD_X + 1) {
         err = pattern_line_too_short;
@@ -45,13 +46,18 @@ int fill_array(int argc, char **argv, int **field) {
   return err;
 }
 
-void print_field(int **field) {
+void print_field(int **field, int day) {
+  // clear terminal
+  clear();
   for (int i = 0; i < FIELD_Y; i++) {
     for (int j = 0; j < FIELD_X; j++) {
-      printf("%d", field[i][j]);
+      printw(field[i][j] == 1 ? "O" : " ");
     }
-    printf("\n");
+    printw("\n");
   }
+  printw("\nDay: %d", day);
+  // refresh terminal
+  refresh();
 }
 
 void free_arrays(int **field1, int **field2) {
@@ -85,4 +91,24 @@ int neighbours_count(int cell_y, int cell_x, int **field) {
     }
   }
   return ngbr_count;
+}
+
+void step(int **field_src, int **field_dst) {
+  int ngbr_count = 0;
+  // look thru all the field
+  for (int i = 0; i < FIELD_Y; i++) {
+    for (int j = 0; j < FIELD_X; j++) {
+      ngbr_count = neighbours_count(i, j, field_src);
+      // if the cell is alive and has > 3 or < 2 neighbours, it dies
+      if (field_src[i][j] == 1 && (ngbr_count > 3 || ngbr_count < 2)) {
+        field_dst[i][j] = 0;  // killing the cell in the destination field
+        // if the cell is dead and has 3 neighbours, it becomes alive
+      } else if (field_src[i][j] == 0 && ngbr_count == 3) {
+        field_dst[i][j] = 1;  // revive the cell in the destination field
+        // if nothing from above, copy the cell without changes
+      } else {
+        field_dst[i][j] = field_src[i][j];
+      }
+    }
+  }
 }

@@ -32,7 +32,7 @@ all:
 	@$(MAKE) --no-print-directory run
 
 run: $(EXECNAME)
-	@./$(EXECNAME)
+	@./$(EXECNAME) ../patterns/lake.txt
 
 test: $(TESTEXECNAME)
 	@./$(TESTEXECNAME)
