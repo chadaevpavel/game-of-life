@@ -7,7 +7,7 @@ The game supports reading pattern files via arguments. Simply run it like this:
 
 where *pattern.txt* is a file, containing the initial state of the field.
 
-The field's width 80 characters and the height is 25 characters. Control keys:
+The field's width is 80 characters and the height is 25 characters. Control keys:
 - <kbd>Q</kbd> - stop
 - <kbd>A</kbd> - speed up
 - <kbd>Z</kbd> - speed down
