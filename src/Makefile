@@ -61,10 +61,9 @@ clean:
 rebuild:
 	@$(MAKE) --no-print-directory clean
 	@$(MAKE) --no-print-directory build
-	@$(MAKE) --no-print-directory run
 
 style:
 	@clang-format -i --style=Google *.c *.h
 
 leaks: $(EXECNAME)
-	@valgrind --quiet --leak-check=full ./$(EXECNAME)
+	@valgrind --quiet --leak-check=full ./$(EXECNAME) ../patterns/lake.txt
