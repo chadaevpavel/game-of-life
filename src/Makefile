@@ -1,14 +1,22 @@
 TASK=game_of_life
-AUXLIBS=
 
 CC=gcc
 CFLAGS=-Wall -Werror -Wextra -std=c11 -pedantic -g
-AUXPATH=
-CFILES=$(wildcard *.c)
-CFILES+=$(AUXPATH)$(AUXLIBS)
-HFILES=$(patsubst %.c,%.h,$(wildcard *.c))
-OFILES=$(patsubst %.c,%.o,$(wildcard *.c))
+TESTSPATH=../tests/
+
+CMAINFILE=game_of_life.c
+OMAINFILE=$(patsubst %.c,%.o,$(CMAINFILE))
+
+CFUNCFILES=gol_functions.c
+HFUNCFILES=$(patsubst %.c,%.h,$(CFUNCFILES))
+OFUNCFILES=$(patsubst %.c,%.o,$(CFUNCFILES))
+
+CTESTFILES=gol_tests.c
+HTESTFILES=$(patsubst %.c,%.h,$(CTESTFILES))
+OTESTFILES=$(patsubst %.c,%.o,$(CTESTFILES))
+
 EXECNAME=$(TASK)
+TESTEXECNAME=$(TASK)_tests
 
 UNAME:=$(shell uname)
 ifeq ($(UNAME), Linux)
@@ -18,7 +26,7 @@ ifeq ($(UNAME), Darwin)
 	LFLAGS=-lcheck -lpthread -lm
 endif
 
-.PHONY: all run build clean rebuild style leaks
+.PHONY: all run test build clean rebuild style leaks
 
 all:
 	@$(MAKE) --no-print-directory run
@@ -26,16 +34,29 @@ all:
 run: $(EXECNAME)
 	@./$(EXECNAME)
 
+test: $(TESTEXECNAME)
+	@./$(TESTEXECNAME)
+
 build: $(EXECNAME)
 
-$(EXECNAME): $(OFILES) $(patsubst %.c,%.o,$(AUXLIBS))
-	@$(CC) $^ $(LFLAGS) -o $(EXECNAME)
+$(EXECNAME): $(OMAINFILE) $(OFUNCFILES)
+	@$(CC) $^ -lncurses -o $(EXECNAME)
 
-$(OFILES): $(CFILES) $(HFILES)
-	@$(CC) $(CFLAGS) -c $(CFILES)
+$(TESTEXECNAME): $(OFUNCFILES) $(OTESTFILES)
+	@$(CC) $^ $(LFLAGS) -o $(TESTEXECNAME)
+
+$(OMAINFILE): $(CMAINFILE) $(CFUNCFILES) $(HFUNCFILES)
+	@$(CC) $(CFLAGS) -c $(CMAINFILE) $(CFUNCFILES)
+
+$(OFUNCFILES): $(CFUNCFILES) $(HFUNCFILES)
+	@$(CC) $(CFLAGS) -c $(CFUNCFILES)
+
+$(OTESTFILES): $(TESTSPATH)$(CTESTFILES) $(TESTSPATH)$(HTESTFILES) $(CFUNCFILES) $(HFUNCFILES)
+	@$(CC) $(CFLAGS) -c $(TESTSPATH)$(CTESTFILES) $(CFUNCFILES)
 
 clean:
 	@rm -rf *.o $(EXECNAME)
+	@rm -rf $(TESTSPATH)*.o $(TESTEXECNAME)
 
 rebuild:
 	@$(MAKE) --no-print-directory clean
